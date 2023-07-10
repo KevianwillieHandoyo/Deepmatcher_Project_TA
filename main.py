@@ -2,7 +2,6 @@ import streamlit as st
 import deepmatcher as dm
 import torch
 import pandas as pd
-from tempfile import NamedTemporaryFile
 import os
 
 model = dm.MatchingModel(attr_summarizer='rnn')
