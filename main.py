@@ -4,7 +4,6 @@ import torch
 import pandas as pd
 import wget
 import zipfile
-import os
 
 model = dm.MatchingModel(attr_summarizer='rnn')
 model.load_state('rnn_model2.pth', map_location=torch.device('cpu'))
@@ -16,7 +15,6 @@ def predictor(file):
     wget.download('https://dl.fbaipublicfiles.com/fasttext/vectors-wiki/wiki.en.zip', out='/root/.vector_cache')
     with zipfile.ZipFile('/root/.vector_cache/wiki.en.zip', 'r') as zip_ref:
         zip_ref.extractall('/root/.vector_cache/')
-    os.remove('/root/.vector_cache/wiki.en.vec')
     unlabeled = dm.data.process_unlabeled(
         path=file,
         trained_model=model,
