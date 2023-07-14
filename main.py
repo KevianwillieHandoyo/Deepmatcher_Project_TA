@@ -4,6 +4,7 @@ import torch
 import pandas as pd
 
 
+
 model = dm.MatchingModel(attr_summarizer='rnn')
 model.load_state('rnn_model2.pth', map_location=torch.device('cpu'))
 
@@ -22,9 +23,17 @@ def predictor(file):
 
     return predictions
 
-def dropdown_list(data):
-    drop_list = data['rtable_Nama_Produk'].unique()
-    return drop_list
+def Convert(string):
+    li = list(string.lower().split(" "))
+    return li
+
+def jaccard_similarity(a, b):
+    # convert to set
+    a = set(a)
+    b = set(b)
+    # calculate jaccard similarity
+    j = float(len(a.intersection(b))) / len(a.union(b))
+    return j
 
 def main():
     st.set_page_config(page_title='Data Integration with Deepmatcher', layout='wide')
@@ -43,16 +52,27 @@ def main():
         st.divider()
     with st.container():
         st.subheader('Contoh Data Hasil Prediksi Model BRNN')
-        data_contoh = pd.read_csv('DEEPMATCHER_unlabeled_predictions.csv')
+        data_contoh = pd.read_csv('deepmatcher_prediction_nomorregistrasi.csv')
         st.dataframe(data_contoh, width=2000)
         st.divider()
     with st.container():
         st.subheader('Cari Produk E-Commerce')
+        jaccard_score = []
         text_input = st.text_input(
             "Cari produk serbuk tabur e-commerce dengan memasukkan nama produk"
         )
         if text_input:
-            rslt_df = data_contoh[(data_contoh['match_prediction'] == 1) & data_contoh['rtable_Nama_Produk'].str.contains(text_input, case=False)]
+            query = Convert(text_input)
+            query = '|'.join(query)
+            query_list = Convert(text_input)
+            df_jaccard = data_contoh[data_contoh['rtable_Nama_Produk'].str.contains(query, case=False) | data_contoh['rtable_Merk'].str.contains(query,case=False)]
+            for index, row in df_jaccard.iterrows():
+                produk_list = row['rtable_Nama_Produk'].lower().split()
+                jscore = jaccard_similarity(query_list, produk_list)
+                jaccard_score.append(jscore)
+            df_jaccard['Jaccard_Score'] = jaccard_score
+            df_largest = df_jaccard.nlargest(20, ['Jaccard_Score'])
+            rslt_df = df_largest.loc[df_largest['match_prediction'] == 1]
             st.dataframe(rslt_df, width=2000)
         st.divider()
     with st.container():
